@@ -1,4 +1,4 @@
-#!/usr//bin/python
+#!/usr/bin/env python
 
 import sys
 import threading
@@ -47,12 +47,32 @@ class ScreenIdController(BaseController):
         print(status.get(ATTR_SCREEN_ID))
         self.status_update_event.set()
 
+def find_chromecast(name):
+    """ Find a Chromecast by name. """
+    chromecasts = pychromecast.get_chromecasts()
 
-friendly_name = sys.argv[1]
+    for chromecast_list in chromecasts:
+        try:
+            iter(chromecast_list)
+        except TypeError:
+            continue
+
+        for chromecast in chromecast_list:
+            if chromecast.name == name:
+                return chromecast
 
 if __name__ == "__main__":
-    chromecasts = pychromecast.get_chromecasts()
-    cast = next(cc for cc in chromecasts if cc.device.friendly_name == friendly_name)
+    if len(sys.argv) < 2:
+        print("Error: Provide name of Chromecast device as first and only arg")
+        exit(1)
+
+    name = sys.argv[1]
+    cast = find_chromecast(name)
+
+    if not cast:
+        print(f"Error: could not find Chromecast device named {name}")
+        exit(1)
+
     cast.wait()
     controller = ScreenIdController()
     cast.register_handler(controller)
